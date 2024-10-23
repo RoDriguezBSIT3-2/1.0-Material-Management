@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="page-title">View Material Waste Log</h1>
+
+<nav class="inventory-nav">
+    <a href="{{ url_for('get_material_log') }}" class="nav-button">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <a href="#" class="nav-button">
+        <i class="fas fa-file-export"></i> Export
+    </a>
+</nav>
+
+<div class="inventory-info">
+    <form id="date-search-form" action="{{ url_for('view_material_log') }}" method="GET">
+        <input type="date" name="date" class="date-box" placeholder="YYYY-MM-DD" value="{{ request.args.get('date', date_today) }}">
+        <button type="submit" class="search-button">Search</button>
+    </form>
+</div>
+
+<table class="inventory-table">
+    <thead>
+        <tr>
+            <th>Items</th>
+            <th>(UOI)</th>
+            <th>Quantity</th>
+            <th>Description</th>
+            <th>Image</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if material_log %}
+            {% for item in material_log %}
+            <tr>
+                <td>{{ item['item'] }}</td>
+                <td>{{ item['uoi'] }}</td>
+                <td>{{ item['quantity'] }}</td>
+                <td>{{ item['description'] }}</td>
+                <td>
+                    {% if item['image_url'] %}
+                        <img src="{{ item['image_url'] }}" alt="{{ item['item'] }}" class="item-image" onclick="openImageModal('{{ item['image_url'] }}')">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="5">No material records found for the selected date.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- Image Modal for viewing large images -->
+<div id="imageModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <img id="modalImage" src="" alt="Material Waste Image" class="modal-image">
+    </div>
+</div>
+
+<script>
+// Image Modal logic
+var imageModal = document.getElementById("imageModal");
+var modalImage = document.getElementById("modalImage");
+var closeImageModalButton = document.getElementsByClassName("close-button")[0];
+
+function openImageModal(imageUrl) {
+    modalImage.src = imageUrl;
+    imageModal.style.display = "block";
+}
+
+closeImageModalButton.addEventListener("click", function() {
+    imageModal.style.display = "none";
+});
+
+// Close modal when clicking outside the modal content
+window.addEventListener("click", function(event) {
+    if (event.target == imageModal) {
+        imageModal.style.display = "none";
+    }
+});
+</script>
+
+{% endblock %}

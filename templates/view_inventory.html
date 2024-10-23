@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="page-title">View Inventory</h1>
+
+<nav class="inventory-nav">
+    <a href="{{ url_for('inventory') }}" class="nav-button">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <a href="#" class="nav-button">
+        <i class="fas fa-file-export"></i> Export
+    </a>
+</nav>
+
+<div class="inventory-info">
+    <form id="date-search-form" action="{{ url_for('view_inventory') }}" method="GET">
+        <input type="date" name="date" class="date-box" placeholder="YYYY-MM-DD" value="{{ request.args.get('date', date_today) }}">
+        <button type="submit" class="search-button">Search</button>
+    </form>
+</div>
+
+<table class="inventory-table">
+    <thead>
+        <tr>
+            <th>Items</th>
+            <th>(UOI)</th>
+            <th>Beginning</th>
+            <th>Receive/Incoming</th>
+            <th>Sales/Outgoing</th>
+            <th>Waste</th>
+            <th>Ending</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if inventory %}
+            {% for item in inventory %}
+            <tr>
+                <td>{{ item['item'] }}</td>
+                <td>{{ item['uoi'] }}</td>
+                <td>{{ item['beginning'] }}</td>
+                <td>{{ item['incoming'] }}</td>
+                <td>{{ item['outgoing'] }}</td>
+                <td>{{ item['waste'] }}</td>
+                <td>{{ item['ending'] }}</td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="8">No inventory found for the selected date.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+{% endblock %}

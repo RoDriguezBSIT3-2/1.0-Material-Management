@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1 class="page-title">Material Waste Log</h1>
+
+<nav class="inventory-nav">
+    <a href="{{ url_for('material') }}" class="nav-button">
+        <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <a class="nav-button" id="openMaterialModalButton">
+        <i class="fas fa-plus-circle"></i> Add Material Waste
+    </a>
+    <a href="{{ url_for('view_material_log') }}" class="nav-button">
+        <i class="fas fa-list-alt"></i> View Material Waste
+    </a>
+    <a href="#" class="nav-button">
+        <i class="fas fa-file-export"></i> Export
+    </a>
+</nav>
+
+<div class="inventory-info">
+    <p><b class="highlight-date">{{ date_today }}</b></p>
+    <div class="search-box-container">
+        <form id="search-form" action="{{ url_for('get_material_log') }}" method="GET">
+            <input type="text" name="search" class="search-box" placeholder="Search" value="{{ request.args.get('search', '') }}">
+            <button type="submit" class="search-button">Search</button>
+        </form>
+    </div>
+</div>
+
+<table class="inventory-table">
+    <thead>
+        <tr>
+            <th>Items</th>
+            <th>(UOI)</th>
+            <th>Quantity</th>
+            <th>Description</th>
+            <th>Image</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% if material_log %}
+            {% for item in material_log %}
+            <tr>
+                <td>{{ item['item'] }}</td>
+                <td>{{ item['uoi'] }}</td>
+                <td>{{ item['quantity']|int }}</td>
+                <td>{{ item['description'] }}</td>
+                <td>
+                    {% if item['image_url'] %}
+                        <img src="{{ item['image_url'] }}" alt="{{ item['item'] }}" class="item-image" onclick="openImageModal('{{ item['image_url'] }}')">
+                    {% else %}
+                        No Image
+                    {% endif %}
+                </td>
+                <td>
+                    <button type="button" class="edit" aria-label="Edit" onclick="openEditModal({{ item['id'] }}, '{{ item['item'] }}', '{{ item['uoi'] }}', {{ item['quantity']|int }}, '{{ item['description'] }}', '{{ item['image_url'] }}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form action="{{ url_for('delete_material_log', item_id=item['id']) }}" method="POST" style="display:inline;">
+                        <button type="submit" class="delete" onclick="return confirm('Are you sure you want to delete this item?');" aria-label="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr>
+                <td colspan="6">No items match your search.</td>
+            </tr>
+        {% endif %}
+    </tbody>
+</table>
+
+<!-- Add Material Waste Modal -->
+<div id="addMaterialWasteModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h1 class="page-title">Add Material Waste</h1>
+        <form action="{{ url_for('add_material_log') }}" method="POST" class="add-inventory-form" enctype="multipart/form-data">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="item">Items:</label>
+                    <input type="text" id="item" name="item" required>
+                </div>
+                <div class="form-group">
+                    <label for="uoi">UOI:</label>
+                    <input type="text" id="uoi" name="uoi" required>
+                </div>
+                <div class="form-group">
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity" step="1" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="materialDescription">Description:</label>
+                    <input type="text" id="materialDescription" name="description" required>
+                </div>
+                <div class="description">
+                    <label for="image">Image:</label>
+                    <input type="file" id="image" name="image">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="submit-button">Save</button>
+                <button type="button" class="cancel-button" id="closeAddMaterialModalButton">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Material Waste Modal -->
+<div id="editMaterialWasteModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h1 class="page-title">Edit Material Waste</h1>
+        <form id="editMaterialWasteForm" action="" method="POST" class="edit-inventory-form" enctype="multipart/form-data">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="editItem">Items:</label>
+                    <input type="text" id="editItem" name="item" required>
+                </div>
+                <div class="form-group">
+                    <label for="editUoi">UOI:</label>
+                    <input type="text" id="editUoi" name="uoi" required>
+                </div>
+                <div class="form-group">
+                    <label for="editQuantity">Quantity:</label>
+                    <input type="number" id="editQuantity" name="quantity" step="1" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="editMaterialDescription">Description:</label>
+                    <input type="text" id="editMaterialDescription" name="description" required>
+                </div>
+                <div class="description">
+                    <label for="editImage">Image:</label>
+                    <input type="file" id="editImage" name="image">
+                </div>
+                <div class="form-group">
+                    <label for="currentImage">Current Image:</label>
+                    <img id="currentImage" src="" alt="Current Image" class="item-image">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="submit-button">Save</button>
+                <button type="button" class="cancel-button" id="closeEditMaterialModalButton">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Image Modal for viewing large images -->
+<div id="imageModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <img id="modalImage" src="" alt="Material Waste Image" class="modal-image">
+    </div>
+</div>
+
+<script>
+// Add Modal logic
+var addModal = document.getElementById("addMaterialWasteModal");
+var openAddModalButton = document.getElementById("openMaterialModalButton");
+var closeAddModalButton = document.getElementsByClassName("close-button")[0];
+var cancelAddButton = document.getElementById("closeAddMaterialModalButton");
+
+openAddModalButton.addEventListener("click", function() {
+    addModal.style.display = "block";
+});
+
+closeAddModalButton.addEventListener("click", function() {
+    addModal.style.display = "none";
+});
+cancelAddButton.addEventListener("click", function() {
+    addModal.style.display = "none";
+});
+
+// Edit Modal logic
+var editModal = document.getElementById("editMaterialWasteModal");
+var closeEditModalButton = document.getElementsByClassName("close-button")[1];
+var cancelEditButton = document.getElementById("closeEditMaterialModalButton");
+
+closeEditModalButton.addEventListener("click", function() {
+    editModal.style.display = "none";
+});
+cancelEditButton.addEventListener("click", function() {
+    editModal.style.display = "none";
+});
+
+function openEditModal(id, item, uoi, quantity, description, imageUrl) {
+    var form = document.getElementById("editMaterialWasteForm");
+    form.action = "/edit_material_log/" + id;  // Corrected route
+
+    document.getElementById("editItem").value = item;
+    document.getElementById("editUoi").value = uoi;
+    document.getElementById("editQuantity").value = quantity;
+    document.getElementById("editMaterialDescription").value = description;
+
+    var currentImage = document.getElementById("currentImage");
+    if (imageUrl) {
+        currentImage.src = imageUrl;
+        currentImage.style.display = "block";
+    } else {
+        currentImage.style.display = "none";
+    }
+
+    editModal.style.display = "block";
+}
+
+// Image Modal logic
+var imageModal = document.getElementById("imageModal");
+var modalImage = document.getElementById("modalImage");
+var closeImageModalButton = document.getElementsByClassName("close-button")[2];
+
+closeImageModalButton.addEventListener("click", function() {
+    imageModal.style.display = "none";
+});
+
+function openImageModal(imageUrl) {
+    modalImage.src = imageUrl;
+    imageModal.style.display = "block";
+}
+
+// Closing modals when clicking outside the modal content
+window.addEventListener("click", function(event) {
+    if (event.target == addModal || event.target == editModal || event.target == imageModal) {
+        addModal.style.display = "none";
+        editModal.style.display = "none";
+        imageModal.style.display = "none";
+    }
+});
+    const searchInput = document.querySelector('.search-box');
+
+    searchInput.addEventListener('input', function() {
+        if (searchInput.value.trim() === '') {
+            document.getElementById('search-form').submit();
+        }
+    });
+</script>
+
+{% endblock %}
