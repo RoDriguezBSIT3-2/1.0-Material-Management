@@ -7,7 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 # Configure PostgreSQL Database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:984832rodriguez@localhost:5432/Inventory'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg2://postgres:984832rodriguez@localhost:5432/Inventory'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Example in-memory storage for demonstration
